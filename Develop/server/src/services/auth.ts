@@ -1,37 +1,37 @@
-import type { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-
+import type { Request} from 'express';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
-interface JwtPayload {
-  _id: unknown;
+interface DecodedUser extends JwtPayload {
+  _id: string;
   username: string;
-  email: string,
+  email: string;
 }
 
-export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
+// GraphQL-compatible authentication function
+export const authMiddleware = ({ req }: { req: Request }): DecodedUser | null => {
   const authHeader = req.headers.authorization;
+  const secretKey = process.env.JWT_SECRET_KEY || '';
 
   if (authHeader) {
     const token = authHeader.split(' ')[1];
 
-    const secretKey = process.env.JWT_SECRET_KEY || '';
-
-    jwt.verify(token, secretKey, (err, user) => {
-      if (err) {
-        return res.sendStatus(403); // Forbidden
-      }
-
-      req.user = user as JwtPayload;
-      return next();
-    });
-  } else {
-    res.sendStatus(401); // Unauthorized
+    try {
+      const decoded = jwt.verify(token, secretKey) as DecodedUser;
+      return decoded; // Return the decoded user object for use in context
+    } catch (err) {
+      console.warn('Invalid token');
+      return null; // Invalid token, return null
+    }
   }
+
+  console.warn('No token provided');
+  return null; // No token provided, return null
 };
 
-export const signToken = (username: string, email: string, _id: unknown) => {
+// Function to sign JWT tokens
+export const signToken = (username: string, email: string, _id: string) => {
   const payload = { username, email, _id };
   const secretKey = process.env.JWT_SECRET_KEY || '';
 
