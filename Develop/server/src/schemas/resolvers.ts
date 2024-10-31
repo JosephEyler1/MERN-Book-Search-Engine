@@ -1,7 +1,7 @@
 import { AuthenticationError } from 'apollo-server-express';
 
-import { signToken } from '../services/auth'; // Adjusted path
-import User from '../models/User';
+import { signToken } from '../services/auth.js'; // Adjusted path
+import User from '../models/User.js';
 
 interface Context {
   user?: { _id: string; username: string; email: string }; // Define the user type based on your JWT payload
