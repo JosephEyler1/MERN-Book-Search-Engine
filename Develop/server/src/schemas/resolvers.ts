@@ -52,6 +52,7 @@ export const resolvers = {
       return { token, user };
     },
     saveBook: async (_: unknown, { input }: SaveBookInput, { user }: Context) => {
+      console.log(user);
       if (!user) {
         throw new AuthenticationError('You must be logged in');
       }

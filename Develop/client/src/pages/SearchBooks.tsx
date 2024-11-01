@@ -71,7 +71,7 @@ const SearchBooks = () => {
     const bookToSave: Book = searchedBooks.find((book) => book.bookId === bookId)!;
     try {
       await saveBook({
-        variables: { input: { ...bookToSave } }
+        variables: { bookData: { ...bookToSave } }
       }
     )
     setSavedBookIds((prev: any) => {

@@ -25,6 +25,7 @@ export const resolvers = {
             return { token, user };
         },
         saveBook: async (_, { input }, { user }) => {
+            console.log(user);
             if (!user) {
                 throw new AuthenticationError('You must be logged in');
             }
