@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Container, Card, Button, Row, Col } from 'react-bootstrap';
-
-import { getMe, deleteBook } from '../utils/API';
+import { useMutation } from '@apollo/client'; // Import useMutation
+import { SAVE_BOOK, REMOVE_BOOK } from '../graphql/mutations'; // Import your mutations
+import { getMe } from '../utils/API';
 import Auth from '../utils/auth';
 import { removeBookId } from '../utils/localStorage';
 import type { User } from '../models/User';
@@ -13,6 +14,9 @@ const SavedBooks = () => {
     password: '',
     savedBooks: [],
   });
+
+  const [saveBook] = useMutation(SAVE_BOOK); // Mutation to save a book
+  const [removeBook] = useMutation(REMOVE_BOOK); // Mutation to remove a book
 
   // use this to determine if `useEffect()` hook needs to run again
   const userDataLength = Object.keys(userData).length;
@@ -42,7 +46,31 @@ const SavedBooks = () => {
     getUserData();
   }, [userDataLength]);
 
-  // create function that accepts the book's mongo _id value as param and deletes the book from the database
+  // Function to save a book
+  const handleSaveBook = async (book: any) => {
+    const token = Auth.loggedIn() ? Auth.getToken() : null;
+
+    if (!token) {
+      return false;
+    }
+
+    try {
+      const { data } = await saveBook({
+        variables: { bookData: { ...book } },
+      });
+
+      if (!data) {
+        throw new Error('something went wrong while saving the book!');
+      }
+
+      // Update userData with the new saved book information
+      setUserData(data.saveBook);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Function to delete a book
   const handleDeleteBook = async (bookId: string) => {
     const token = Auth.loggedIn() ? Auth.getToken() : null;
 
@@ -51,15 +79,17 @@ const SavedBooks = () => {
     }
 
     try {
-      const response = await deleteBook(bookId, token);
+      const { data } = await removeBook({
+        variables: { bookId },
+      });
 
-      if (!response.ok) {
-        throw new Error('something went wrong!');
+      if (!data) {
+        throw new Error('something went wrong while removing the book!');
       }
 
-      const updatedUser = await response.json();
-      setUserData(updatedUser);
-      // upon success, remove book's id from localStorage
+      // Update userData with the updated saved books after removal
+      setUserData(data.removeBook);
+      // Remove book's id from localStorage
       removeBookId(bookId);
     } catch (err) {
       console.error(err);
@@ -85,16 +115,14 @@ const SavedBooks = () => {
       <Container>
         <h2 className='pt-5'>
           {userData.savedBooks.length
-            ? `Viewing ${userData.savedBooks.length} saved ${
-                userData.savedBooks.length === 1 ? 'book' : 'books'
-              }:`
+            ? `Viewing ${userData.savedBooks.length} saved ${userData.savedBooks.length === 1 ? 'book' : 'books'}:`
             : 'You have no saved books!'}
         </h2>
         <Row>
           {userData.savedBooks.map((book) => {
             return (
-              <Col md='4'>
-                <Card key={book.bookId} border='dark'>
+              <Col md='4' key={book.bookId}>
+                <Card border='dark'>
                   {book.image ? (
                     <Card.Img
                       src={book.image}
@@ -106,6 +134,12 @@ const SavedBooks = () => {
                     <Card.Title>{book.title}</Card.Title>
                     <p className='small'>Authors: {book.authors}</p>
                     <Card.Text>{book.description}</Card.Text>
+                    <Button
+                      className='btn-block btn-success'
+                      onClick={() => handleSaveBook(book)} // Save book button
+                    >
+                      Save this Book!
+                    </Button>
                     <Button
                       className='btn-block btn-danger'
                       onClick={() => handleDeleteBook(book.bookId)}
