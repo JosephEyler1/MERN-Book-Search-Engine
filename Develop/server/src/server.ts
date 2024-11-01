@@ -10,12 +10,12 @@ import { authMiddleware } from './services/auth.js'; // Import auth middleware
 const app: Application = express();
 const PORT = process.env.PORT || 3001;
 
-async function startApolloServer() {
-  const server = new ApolloServer({
-    typeDefs,
-    resolvers,
-  });
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+});
 
+async function startApolloServer() {
   await server.start();
   await db;
   app.use(express.urlencoded({ extended: true }));
@@ -32,13 +32,12 @@ async function startApolloServer() {
   };
 
 
-  db.once('open', () => {
+  
     app.listen(PORT, () =>
       console.log(
         `🌍 Now listening on http://localhost:${PORT}/graphql`
       )
     );
-  });
 }
 
 startApolloServer();
