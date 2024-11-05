@@ -7,7 +7,7 @@ export const resolvers = {
             if (!user) {
                 throw new AuthenticationError('You must be logged in');
             }
-            return await User.findById(user._id).exec(); // Use exec() for better performance
+            return await User.findById(user._id).populate("savedBooks").exec(); // Use exec() for better performance
         },
     },
     Mutation: {
@@ -24,12 +24,11 @@ export const resolvers = {
             const token = signToken(user.username, user.email, user.id);
             return { token, user };
         },
-        saveBook: async (_, { input }, { user }) => {
-            console.log(user);
+        saveBook: async (_, { bookData }, { user }) => {
             if (!user) {
                 throw new AuthenticationError('You must be logged in');
             }
-            return await User.findByIdAndUpdate(user._id, { $addToSet: { savedBooks: input } }, { new: true }).exec(); // Use exec() for better performance
+            return await User.findByIdAndUpdate(user._id, { $addToSet: { savedBooks: bookData } }, { new: true }).exec(); // Use exec() for better performance
         },
         removeBook: async (_, { bookId }, { user }) => {
             if (!user) {

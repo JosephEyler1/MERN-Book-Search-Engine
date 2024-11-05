@@ -1,5 +1,4 @@
 import { AuthenticationError } from 'apollo-server-express';
-
 import { signToken } from '../services/auth.js'; // Adjusted path
 import User from '../models/User.js';
 
@@ -19,7 +18,13 @@ interface AddUserInput {
 }
 
 interface SaveBookInput {
-  input: any; // You might want to define a specific type for your book input
+  bookData: {
+    authors: string[];
+    bookId: string;
+    description: string;
+    image: string;
+    title: string;
+  }; // You might want to define a specific type for your book input
 }
 
 interface RemoveBookInput {
@@ -32,7 +37,7 @@ export const resolvers = {
       if (!user) {
         throw new AuthenticationError('You must be logged in');
       }
-      return await User.findById(user._id).exec(); // Use exec() for better performance
+      return await User.findById(user._id).populate("savedBooks").exec(); // Use exec() for better performance
     },
   },
   Mutation: {
@@ -51,14 +56,13 @@ export const resolvers = {
       const token = signToken(user.username, user.email, user.id);
       return { token, user };
     },
-    saveBook: async (_: unknown, { input }: SaveBookInput, { user }: Context) => {
-      console.log(user);
+    saveBook: async (_: unknown, { bookData }: SaveBookInput, { user }: Context) => {
       if (!user) {
         throw new AuthenticationError('You must be logged in');
       }
       return await User.findByIdAndUpdate(
         user._id,
-        { $addToSet: { savedBooks: input } },
+        { $addToSet: { savedBooks: bookData } },
         { new: true }
       ).exec(); // Use exec() for better performance
     },
