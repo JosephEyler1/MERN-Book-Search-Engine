@@ -1,43 +1,42 @@
-import type { Request } from 'express';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import { Request } from 'express';
+import jwt from 'jsonwebtoken';
+import { AuthenticationError } from 'apollo-server-express'; // Import Apollo Server's error handling
 import dotenv from 'dotenv';
 
-dotenv.config(); // Load environment variables
+dotenv.config(); // Load environment variables from .env
 
-interface DecodedUser extends JwtPayload {
-  _id: string;
+// Define the structure of the JWT payload
+interface JwtPayload {
+  _id: unknown;
   username: string;
   email: string;
 }
 
-// GraphQL-compatible authentication middleware
-export const authMiddleware = ({ req }: { req: Request })=> {
-  let token = req.body.token || req.query.token || req.headers.authorization;
-  const secretKey = process.env.JWT_SECRET_KEY || '';
+// Function to authenticate token in a GraphQL context
+export const authenticateToken = (req: Request): JwtPayload => {
+  const authHeader = req.headers.authorization;
 
-  if (req.headers.authorization) {
-     token = req.headers.authorization.split(' ')[1]; // Extract token from "Bearer <token>"
-  }
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1]; // Extract token after 'Bearer '
+    const secretKey = process.env.JWT_SECRET_KEY || ''; // Get secret key from env
 
-  if (!token){
-    console.log("no token provided")
-    return req;
+    try {
+      // Verify the JWT and return the payload
+      const user = jwt.verify(token, secretKey) as JwtPayload;
+      return user;
+    } catch (err) {
+      throw new AuthenticationError('Invalid/Expired token'); // Apollo-compatible error
+    }
+  } else {
+    throw new AuthenticationError('Authorization token must be provided'); // Apollo-compatible error
   }
-
-  try {
-    const { data } = jwt.verify(token, secretKey) as DecodedUser;
-    req.user= data; // Return decoded user object
-  } catch (error) {
-    console.error('Invalid or expired token:', error);
-    return req; // Return req if token is invalid
-  }
-  return req;
 };
 
-// Function to sign JWT tokens
-export const signToken = (username: string, email: string, _id: string): string => {
-  const payload = { username, email, _id };
-  const secretKey = process.env.JWT_SECRET_KEY || '';
+// Function to sign a new token
+export const signToken = (username: string, email: string, _id: unknown): string => {
+  const payload = { username, email, _id }; // Define the JWT payload
+  const secretKey = process.env.JWT_SECRET_KEY || ''; // Get secret key from env
 
-  return jwt.sign({data:payload}, secretKey, { expiresIn: '1h' }); // 1 hour expiry
+  // Sign the token with a 1-hour expiration
+  return jwt.sign(payload, secretKey, { expiresIn: '1h' });
 };
