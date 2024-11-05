@@ -81,7 +81,7 @@ const SavedBooks = () => {
       <Container>
         <h2 className='pt-5'>
           {userData.me.savedBooks?.length
-            ? `Viewing ${userData.savedBooks?.length??"0"} saved ${userData.savedBooks?.length === 1 ? 'book' : 'books'}:`
+            ? `Viewing ${userData.me?.savedBooks?.length??"0"} saved ${userData.me?.savedBooks?.length === 1 ? 'book' : 'books'}:`
             : 'You have no saved books!'}
         </h2>
         <Row>
@@ -100,12 +100,6 @@ const SavedBooks = () => {
                     <Card.Title>{book.title}</Card.Title>
                     <p className='small'>Authors: {book.authors}</p>
                     <Card.Text>{book.description}</Card.Text>
-                    <Button
-                      className='btn-block btn-success'
-                      onClick={() => handleSaveBook(book)} // Save book button
-                    >
-                      Save this Book!
-                    </Button>
                     <Button
                       className='btn-block btn-danger'
                       onClick={() => handleDeleteBook(book.bookId)}
