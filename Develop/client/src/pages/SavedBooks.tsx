@@ -1,7 +1,7 @@
 
 import { Container, Card, Button, Row, Col } from 'react-bootstrap';
 import { useMutation, useQuery } from '@apollo/client'; // Import useMutation
-import { SAVE_BOOK, REMOVE_BOOK } from '../graphql/mutations'; // Import your mutations
+import { REMOVE_BOOK } from '../graphql/mutations'; // Import your mutations
 import { GET_ME } from '../graphql/queries.js';
 import Auth from '../utils/auth';
 import { Book } from '../models/Book.js';
@@ -9,33 +9,8 @@ import { removeBookId } from '../utils/localStorage.js';
 
 const SavedBooks = () => {
 
-  const [saveBook] = useMutation(SAVE_BOOK); // Mutation to save a book
   const [removeBook] = useMutation(REMOVE_BOOK); // Mutation to remove a book
   const {data:userData, loading} = useQuery(GET_ME);
-
-
- 
-  // Function to save a book
-  const handleSaveBook = async (book: any) => {
-    const token = Auth.loggedIn() ? Auth.getToken() : null;
-
-    if (!token) {
-      return false;
-    }
-
-    try {
-      const { data } = await saveBook({
-        variables: { bookData: { ...book } },
-      });
-
-      if (!data) {
-        throw new Error('something went wrong while saving the book!');
-      }
-
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   // Function to delete a book
   const handleDeleteBook = async (bookId: string) => {
@@ -81,7 +56,7 @@ const SavedBooks = () => {
       <Container>
         <h2 className='pt-5'>
           {userData.me.savedBooks?.length
-            ? `Viewing ${userData.savedBooks?.length??"0"} saved ${userData.savedBooks?.length === 1 ? 'book' : 'books'}:`
+            ? `Viewing ${userData.me?.savedBooks?.length??"0"} saved ${userData.me?.savedBooks?.length === 1 ? 'book' : 'books'}:`
             : 'You have no saved books!'}
         </h2>
         <Row>
@@ -100,12 +75,6 @@ const SavedBooks = () => {
                     <Card.Title>{book.title}</Card.Title>
                     <p className='small'>Authors: {book.authors}</p>
                     <Card.Text>{book.description}</Card.Text>
-                    <Button
-                      className='btn-block btn-success'
-                      onClick={() => handleSaveBook(book)} // Save book button
-                    >
-                      Save this Book!
-                    </Button>
                     <Button
                       className='btn-block btn-danger'
                       onClick={() => handleDeleteBook(book.bookId)}
