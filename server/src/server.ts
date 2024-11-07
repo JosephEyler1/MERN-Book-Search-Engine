@@ -6,6 +6,9 @@ import db from './config/connection.js';
 import { typeDefs } from './schemas/typeDefs.js';
 import { resolvers } from './schemas/resolvers.js';
 import { authMiddleware } from './services/auth.js'; // Import auth middleware
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+    
 
 const app: Application = express();
 const PORT = process.env.PORT || 3001;
@@ -18,6 +21,7 @@ const server = new ApolloServer({
 async function startApolloServer() {
   await server.start();
   await db;
+  const __dirname = dirname(fileURLToPath(import.meta.url));
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
   app.use("/graphql", expressMiddleware(server, {
